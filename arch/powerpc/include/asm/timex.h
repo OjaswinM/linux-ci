@@ -11,7 +11,7 @@
 #include <asm/cputable.h>
 #include <asm/vdso/timebase.h>
 
-ostatic inline cycles_t get_cycles(void)
+static inline cycles_t get_cycles(void)
 {
 	return mftb();
 }
