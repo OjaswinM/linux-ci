@@ -1,4 +1,4 @@
-name: powerpc/kernel+qemu
+name: powerpc/kernel+qemu+kselftest
 
 # Controls when the action will run.
 on:
