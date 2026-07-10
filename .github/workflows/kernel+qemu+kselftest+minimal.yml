@@ -134,6 +134,5 @@ jobs:
 
     - name: Run kselftests on ${{ matrix.machine_2 }} with ${{ matrix.new-image }} build kernel
       run: ./scripts/boot/qemu-${{ matrix.machine_2 }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=${{ github.workspace }},target=powerpc
-      run: ./scripts/boot/qemu-${{ matrix.machine_2 }}
       if: matrix.machine_2 != ''
 
