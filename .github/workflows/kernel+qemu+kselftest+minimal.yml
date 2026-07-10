@@ -30,7 +30,8 @@ jobs:
           - subarch: ppc64le
             defconfig: ppc64le_guest_defconfig
             image: fedora-42
-            merge_config: "./arch/powerpc/configs/kvm_guest.config"
+            # We should prepend /linux because thats where it lives in the build container
+            merge_config: "/linux/arch/powerpc/configs/kvm_guest.config"
 
     env:
       ARCH: powerpc
