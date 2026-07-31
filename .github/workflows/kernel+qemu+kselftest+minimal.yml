@@ -118,8 +118,5 @@ jobs:
       with:
         name: ${{ matrix.defconfig }}-${{ matrix.new-image }}
 
-    - name: Run qemu-${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
-      run: ./scripts/boot/qemu-${{ matrix.machine }}
-
     - name: Run kselftests on ${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
       run: ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=${{ github.workspace }},target=powerpc
