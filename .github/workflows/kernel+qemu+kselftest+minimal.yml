@@ -105,8 +105,11 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Download root disk
-      run: make -C root-disks ${{ matrix.rootfs }}
+    - name: Download and verify root disk
+      run: |
+        ./root-disks/install-deps.sh
+        make -C root-disks cloud-init-user-data.img
+        make -C root-disks ${{ matrix.rootfs }}
 
     - name: APT update
       run: sudo apt update
