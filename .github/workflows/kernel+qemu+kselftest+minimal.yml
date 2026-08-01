@@ -107,5 +107,11 @@ jobs:
       with:
         name: ${{ matrix.defconfig }}-${{ matrix.new-image }}
 
+    - name: Download and verify root disk
+      run: |
+        ./root-disks/install-deps.sh
+        make -C root-disks cloud-init-user-data.img
+        make -C root-disks ${{ matrix.rootfs }}
+
     - name: Run kselftests on ${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
       run: ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=${{ github.workspace }},target=powerpc
