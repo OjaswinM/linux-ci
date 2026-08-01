@@ -5,11 +5,6 @@ on:
   # This allows the build to be triggered manually via the github UI.
   workflow_dispatch:
 
-  push:
-    # This triggers the build on a push to merge-test only
-    branches:
-    - 'merge-test'
-
 jobs:
   kernel:
     runs-on: ubuntu-latest
