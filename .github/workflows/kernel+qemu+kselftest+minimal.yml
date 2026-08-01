@@ -72,7 +72,7 @@ jobs:
       matrix:
         include:
           - defconfig: ppc64le_guest_defconfig
-            machine: pseries+p8+tcg
+            machine: pseries+p9+tcg
             machine_2: pseries+p9+tcg
             packages: qemu-system-ppc64
             rootfs: ubuntu22.04-cloudimg-ppc64el.qcow2
