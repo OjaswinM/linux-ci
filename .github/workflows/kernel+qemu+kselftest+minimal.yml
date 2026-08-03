@@ -137,8 +137,9 @@ jobs:
         cp ~/output/arch/powerpc/boot/uImage arch/powerpc/boot/ 2>/dev/null || true
         ls -lh ~/output ~/output/arch/powerpc/boot ~/output/include/config
 
+    - name: Run kselftests on ${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
+      run: KBUILD_OUTPUT=~/output ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=${{ github.workspace }},target=powerpc
+
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
 
-    - name: Run kselftests on ${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
-      run: KBUILD_OUTPUT=~/output ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=${{ github.workspace }},target=powerpc
