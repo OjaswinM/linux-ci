@@ -136,4 +136,4 @@ jobs:
         ls -lh vmlinux arch/powerpc/boot/
 
     - name: Run kselftests on ${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
-      run: ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=${{ github.workspace }},target=powerpc
+      run: KBUILD_OUTPUT=. ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=${{ github.workspace }},target=powerpc
