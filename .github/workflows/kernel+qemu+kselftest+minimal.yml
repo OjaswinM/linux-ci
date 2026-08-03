@@ -101,9 +101,11 @@ jobs:
 
     - name: Download and verify root disk
       run: |
-        ./root-disks/install-deps.sh
-        make -C root-disks cloud-init-user-data.img
-        make -C root-disks ${{ matrix.rootfs }}
+        pushd root-disks
+        ./install-deps.sh
+        cat cloud-init-user-data.txt
+        make cloud-init-user-data.img
+        make ${{ matrix.rootfs }}
 
     - name: APT update
       run: sudo apt update
