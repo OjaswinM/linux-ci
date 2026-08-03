@@ -129,17 +129,11 @@ jobs:
 
     - name: Copy kernel artifacts to workspace
       run: |
-        mkdir -p arch/powerpc/boot/
-        cp ~/output/vmlinux .
-        cp ~/output/.config .
-        cp ~/output/System.map .
-        cp ~/output/arch/powerpc/boot/zImage arch/powerpc/boot/ 2>/dev/null || true
-        cp ~/output/arch/powerpc/boot/uImage arch/powerpc/boot/ 2>/dev/null || true
         ls -lh ~/output ~/output/arch/powerpc/boot ~/output/include/config
-
-    - name: Run kselftests on ${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
-      run: KBUILD_OUTPUT=~/output ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=${{ github.workspace }},target=powerpc
 
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
+
+    - name: Run kselftests on ${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
+      run: KBUILD_OUTPUT=~/output ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=${{ github.workspace }},target=powerpc
 
