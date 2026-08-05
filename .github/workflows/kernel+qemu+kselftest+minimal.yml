@@ -1,0 +1,145 @@
+name: powerpc/kernel+qemu+kselftest+minimal
+
+# Controls when the action will run.
+on:
+  # This allows the build to be triggered manually via the github UI.
+  workflow_dispatch:
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+  
+    strategy:
+      matrix:
+        include:
+          # ppc64le_guest_defconfig
+          - subarch: ppc64le
+            defconfig: ppc64le_guest_defconfig
+            image: fedora-42
+            # We should prepend /linux because thats where it lives in the build container
+            merge_config: "/linux/arch/powerpc/configs/kvm_guest.config"
+  
+    env:
+      ARCH: powerpc
+      TARGET: kernel
+      CCACHE: 1
+      SUBARCH: ${{ matrix.subarch }}
+      IMAGE: ${{ matrix.image }}
+      DEFCONFIG: ${{ matrix.defconfig }}
+      MERGE_CONFIG: ${{ matrix.merge_config }}
+  
+    steps:
+    - uses: actions/checkout@v4
+  
+    - name: Register problem matchers
+      run: |
+        echo "::add-matcher::.github/problem-matchers/compiler-source.json"
+        echo "::add-matcher::.github/problem-matchers/compiler-non-source.json"
+    - name: Load ccache
+      uses: actions/cache@v4
+      with:
+        path: ~/.ccache
+        key: ${{ matrix.image }}-${{ matrix.subarch }}-${{ matrix.defconfig }}
+  
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+  
+    - name: Restore cached kernel build
+      id: kernel-cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/output/vmlinux
+          ~/output/.config
+          ~/output/System.map
+          ~/output/modules.tar.bz2
+          ~/output/arch/powerpc/boot/zImage
+          ~/output/arch/powerpc/boot/uImage
+          ~/output/include/config/kernel.release
+        key: kernel-build-${{ matrix.image }}-${{ matrix.subarch }}-${{ matrix.defconfig }}
+  
+    - name: Build
+      if: steps.kernel-cache.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p ~/.ccache
+        ./arch/powerpc/tools/ci-build.sh
+  
+    - name: Verify kernel artifacts
+      run: |
+        ls -lh ~/output/
+        test -f ~/output/vmlinux || exit 1
+  boot:
+    runs-on: ubuntu-latest
+    needs: kernel
+
+    strategy:
+      matrix:
+        include:
+          - defconfig: ppc64le_guest_defconfig
+            machine: pseries+p9+tcg
+            machine_2: pseries+p9+tcg
+            packages: qemu-system-ppc64
+            rootfs: ubuntu24.04-cloudimg-ppc64el.qcow2
+            new-image: fedora-42
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: ojaswinm/ci-scripts
+        ref: kselftest-support
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: APT update
+      run: sudo apt update
+
+    - name: Download and verify root disk
+      run: |
+        pushd root-disks
+        ./install-deps.sh
+        cat cloud-init-user-data.txt
+        make cloud-init-user-data.img
+        make ${{ matrix.rootfs }}
+
+    - name: Install dependencies
+      run: sudo apt install -y ${{ matrix.packages }} python3-pexpect python3-termcolor python3-yaml
+
+    - name: Restore cached kernel build
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ~/output/vmlinux
+          ~/output/.config
+          ~/output/System.map
+          ~/output/modules.tar.bz2
+          ~/output/arch/powerpc/boot/zImage
+          ~/output/arch/powerpc/boot/uImage
+          ~/output/include/config/kernel.release
+        key: kernel-build-${{ matrix.new-image }}-ppc64le-${{ matrix.defconfig }}
+        fail-on-cache-miss: true
+
+    - name: Copy kernel artifacts to workspace
+      run: |
+        ls -lh ~/output ~/output/arch/powerpc/boot ~/output/include/config
+
+    - name: Clone kernel source if not present
+      run: |
+        if [ ! -d ~/linux-kernel ]; then
+          git clone --depth 1 https://github.com/torvalds/linux.git ~/linux-kernel
+        fi
+
+        # - name: Setup tmate session
+        #   uses: mxschmitt/action-tmate@v3
+
+    - name: Run kselftests on ${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
+      run: KBUILD_OUTPUT=~/output ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=~/linux-kernel,target=kselftest_harness
+
