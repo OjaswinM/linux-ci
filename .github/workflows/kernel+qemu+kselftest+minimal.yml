@@ -4,6 +4,12 @@ name: powerpc/kernel+qemu+kselftest+minimal
 on:
   # This allows the build to be triggered manually via the github UI.
   workflow_dispatch:
+    inputs:
+      kselftest_target:
+        description: 'Kselftest target to run (e.g., kselftest_harness, mm, bpf)'
+        required: false
+        default: 'kselftest_harness'
+        type: string
 
 jobs:
   kernel:
@@ -35,6 +41,7 @@ jobs:
       run: |
         echo "::add-matcher::.github/problem-matchers/compiler-source.json"
         echo "::add-matcher::.github/problem-matchers/compiler-non-source.json"
+
     - name: Load ccache
       uses: actions/cache@v4
       with:
@@ -141,5 +148,5 @@ jobs:
         #   uses: mxschmitt/action-tmate@v3
 
     - name: Run kselftests on ${{ matrix.machine }} with ${{ matrix.new-image }} build kernel
-      run: KBUILD_OUTPUT=~/output ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=~/linux-kernel,target=kselftest_harness
+      run: KBUILD_OUTPUT=~/output ./scripts/boot/qemu-${{ matrix.machine }} --cloud-image ${{ matrix.rootfs }} --pexpect-timeout 0 --test-name kselftests --test-args kernel_src=~/linux-kernel,target=${{ inputs.kselftest_target }}
 
